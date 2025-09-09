@@ -1,0 +1,42 @@
+module_name: "Telemetry"
+
+buckets:
+    high_frequency_bucket:
+        frequency_hz: 100
+        parameters:
+            tm_CAN1Util_percent:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+            tm_CAN2Util_percent:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+            tm_SDBufferFill_percent:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+            tm_RadioBufferFill_percent:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+            tm_SDBytesTransferred_bytes:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+            tm_RadioBytesTransferred_bytes:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+            tm_SDPacketsDropped_ul:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+            tm_RadioPacketsDropped_ul:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+            tm_CoinBattery_V:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
