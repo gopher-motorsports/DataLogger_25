@@ -63,7 +63,9 @@ SD_HandleTypeDef hsd;
 DMA_HandleTypeDef hdma_sdio_rx;
 DMA_HandleTypeDef hdma_sdio_tx;
 
+UART_HandleTypeDef huart1;
 UART_HandleTypeDef huart2;
+DMA_HandleTypeDef hdma_usart1_tx;
 
 osThreadId statusTaskHandle;
 uint32_t statusTaskBuffer[ 128 ];
@@ -77,6 +79,7 @@ osStaticThreadDef_t loggingTaskControlBlock;
 osThreadId serviceGcanTaskHandle;
 uint32_t serviceGcanTaskBuffer[ 1024 ];
 osStaticThreadDef_t serviceGcanTaskControlBlock;
+osThreadId sendTelemetryHandle;
 /* USER CODE BEGIN PV */
 
 /* USER CODE END PV */
@@ -91,10 +94,12 @@ static void MX_SDIO_SD_Init(void);
 static void MX_CAN2_Init(void);
 static void MX_CAN1_Init(void);
 static void MX_ADC1_Init(void);
+static void MX_USART1_UART_Init(void);
 void startStatusTask(void const * argument);
 void startPrintTask(void const * argument);
 void startLoggingTask(void const * argument);
 void startServiceGcanTask(void const * argument);
+void startSendTelemetry(void const * argument);
 
 /* USER CODE BEGIN PFP */
 #ifdef __GNUC__
@@ -169,6 +174,7 @@ int main(void)
   MX_CAN2_Init();
   MX_CAN1_Init();
   MX_ADC1_Init();
+  MX_USART1_UART_Init();
   /* USER CODE BEGIN 2 */
 
   init_can(&hcan1, GCAN0);
@@ -209,6 +215,10 @@ int main(void)
   /* definition and creation of serviceGcanTask */
   osThreadStaticDef(serviceGcanTask, startServiceGcanTask, osPriorityHigh, 0, 1024, serviceGcanTaskBuffer, &serviceGcanTaskControlBlock);
   serviceGcanTaskHandle = osThreadCreate(osThread(serviceGcanTask), NULL);
+
+  /* definition and creation of sendTelemetry */
+  osThreadDef(sendTelemetry, startSendTelemetry, osPriorityIdle, 0, 2048);
+  sendTelemetryHandle = osThreadCreate(osThread(sendTelemetry), NULL);
 
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
@@ -495,6 +505,39 @@ static void MX_SDIO_SD_Init(void)
 }
 
 /**
+  * @brief USART1 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_USART1_UART_Init(void)
+{
+
+  /* USER CODE BEGIN USART1_Init 0 */
+
+  /* USER CODE END USART1_Init 0 */
+
+  /* USER CODE BEGIN USART1_Init 1 */
+
+  /* USER CODE END USART1_Init 1 */
+  huart1.Instance = USART1;
+  huart1.Init.BaudRate = 115200;
+  huart1.Init.WordLength = UART_WORDLENGTH_8B;
+  huart1.Init.StopBits = UART_STOPBITS_1;
+  huart1.Init.Parity = UART_PARITY_NONE;
+  huart1.Init.Mode = UART_MODE_TX_RX;
+  huart1.Init.HwFlowCtl = UART_HWCONTROL_NONE;
+  huart1.Init.OverSampling = UART_OVERSAMPLING_16;
+  if (HAL_UART_Init(&huart1) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN USART1_Init 2 */
+
+  /* USER CODE END USART1_Init 2 */
+
+}
+
+/**
   * @brief USART2 Initialization Function
   * @param None
   * @retval None
@@ -546,6 +589,9 @@ static void MX_DMA_Init(void)
   /* DMA2_Stream6_IRQn interrupt configuration */
   HAL_NVIC_SetPriority(DMA2_Stream6_IRQn, 5, 0);
   HAL_NVIC_EnableIRQ(DMA2_Stream6_IRQn);
+  /* DMA2_Stream7_IRQn interrupt configuration */
+  HAL_NVIC_SetPriority(DMA2_Stream7_IRQn, 5, 0);
+  HAL_NVIC_EnableIRQ(DMA2_Stream7_IRQn);
 
 }
 
@@ -680,6 +726,26 @@ void startServiceGcanTask(void const * argument)
     osDelay(1);
   }
   /* USER CODE END startServiceGcanTask */
+}
+
+/* USER CODE BEGIN Header_startSendTelemetry */
+/**
+* @brief Function implementing the sendTelemetry thread.
+* @param argument: Not used
+* @retval None
+*/
+/* USER CODE END Header_startSendTelemetry */
+void startSendTelemetry(void const * argument)
+{
+  /* USER CODE BEGIN startSendTelemetry */
+  /* Infinite loop */
+  for(;;)
+  {
+    void tm_collect_data();
+    void tm_transmit_data();
+    osDelay(1);
+  }
+  /* USER CODE END startSendTelemetry */
 }
 
 /**
