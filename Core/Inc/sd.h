@@ -13,6 +13,7 @@
 /* ==================================================================== */
 
 bool sd_init();
+bool sd_debounce();
 void sd_deinit();
 bool sd_write(uint8_t* buffer, uint16_t size);
 

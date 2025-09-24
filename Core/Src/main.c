@@ -129,7 +129,13 @@ GETCHAR_PROTOTYPE
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-
+uint8_t BSP_SD_IsDetected(void){
+    __IO uint8_t status = SD_PRESENT;
+    // if (HAL_GPIO_ReadPin(SDIO_CD_GPIO_Port, SDIO_CD_GPIO_Pin) != GPIO_PIN_RESET){
+    //   status = SD_NOT_PRESENT;
+    // }
+    return status;
+}
 /* USER CODE END 0 */
 
 /**
@@ -489,7 +495,12 @@ static void MX_SDIO_SD_Init(void)
   hsd.Init.HardwareFlowControl = SDIO_HARDWARE_FLOW_CONTROL_DISABLE;
   hsd.Init.ClockDiv = 0;
   /* USER CODE BEGIN SDIO_Init 2 */
-
+if (HAL_SD_Init(&hsd)!=HAL_OK){
+  Error_Handler();
+}
+if (HAL_SD_ConfigWideBusOperation(&hsd, SDIO_BUS_WIDE_4B) != HAL_OK){
+  Error_Handler();
+}
   /* USER CODE END SDIO_Init 2 */
 
 }
