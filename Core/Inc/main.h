@@ -63,6 +63,18 @@ void Error_Handler(void);
 #define MCU_FAULT_GPIO_Port GPIOA
 #define MCU_GSENSE_Pin GPIO_PIN_7
 #define MCU_GSENSE_GPIO_Port GPIOA
+#define RFD_GPIO5_Pin GPIO_PIN_4
+#define RFD_GPIO5_GPIO_Port GPIOC
+#define RFD_GPIO4_Pin GPIO_PIN_5
+#define RFD_GPIO4_GPIO_Port GPIOC
+#define RFD_GPIO3_Pin GPIO_PIN_0
+#define RFD_GPIO3_GPIO_Port GPIOB
+#define RFD_GPIO2_Pin GPIO_PIN_1
+#define RFD_GPIO2_GPIO_Port GPIOB
+#define RFD_GPIO1_Pin GPIO_PIN_2
+#define RFD_GPIO1_GPIO_Port GPIOB
+#define RFD_GPIO0_Pin GPIO_PIN_10
+#define RFD_GPIO0_GPIO_Port GPIOB
 #define SDIO_CD_Pin GPIO_PIN_15
 #define SDIO_CD_GPIO_Port GPIOA
 

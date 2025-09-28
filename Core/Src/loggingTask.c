@@ -15,6 +15,7 @@
 /* ==================================================================== */
 
 extern ADC_HandleTypeDef hadc1;
+extern UART_HandleTypeDef huart1;
 
 
 // buffer for ADC_VBAT samples (coin cell battery)
@@ -36,8 +37,30 @@ static TM_BUFFER buffer2 = {
     .fill = 0
 };
 
+// RADIO DOUBLE BUFFER
+static uint8_t b3[TM_RADIO_BUFFER_SIZE];
+static TM_BUFFER buffer3 = {
+    .bytes = b3,
+    .size = TM_RADIO_BUFFER_SIZE,
+    .fill = 0
+};
+
+static uint8_t b4[TM_RADIO_BUFFER_SIZE];
+static TM_BUFFER buffer4 = {
+    .bytes = b4,
+    .size = TM_RADIO_BUFFER_SIZE,
+    .fill = 0
+};
+
+
 TM_DBL_BUFFER SD_DB = {
     .buffers = { &buffer1, &buffer2 },
+    .write_index = 0,
+    .tx_cplt = 1
+};
+
+TM_DBL_BUFFER RADIO_DB = {
+    .buffers = { &buffer3, &buffer4 },
     .write_index = 0,
     .tx_cplt = 1
 };
@@ -72,7 +95,8 @@ void runLoggingTask()
 
     // Collect Data
     static uint32_t sd_last_log[NUM_OF_PARAMETERS] = {0};
-
+    static uint32_t radio_last_tx[NUM_OF_PARAMETERS] = {0};
+    
 	for (uint32_t i = 1; i < NUM_OF_PARAMETERS; i++) {
 		CAN_INFO_STRUCT* param = PARAMETERS[i];
 		uint32_t tick = HAL_GetTick();
@@ -87,11 +111,24 @@ void runLoggingTask()
 				tm_SDPacketsDropped_ul.data += 1;
 			}
 		}
+        
+        if (param->last_rx > radio_last_tx[i] && (tick - radio_last_tx[i]) > TM_RADIO_TX_DELAY) {
+			// parameter has been updated and hasn't been sent in a while
+			// create packet and add to radio buffer
+			bool res = tm_data_record(RADIO_DB.buffers[RADIO_DB.write_index], param);
+			if (res) {
+				radio_last_tx[i] = tick;
+			} else {
+				tm_RadioPacketsDropped_ul.data += 1;
+			}
+		}
 
 	}
 
 	float fillLevel = (float) SD_DB.buffers[SD_DB.write_index]->fill / SD_DB.buffers[SD_DB.write_index]->size * 100.0f;
     update_and_queue_param_float(&tm_SDBufferFill_percent, fillLevel);
+    fillLevel = (float) RADIO_DB.buffers[RADIO_DB.write_index]->fill / RADIO_DB.buffers[RADIO_DB.write_index]->size * 100.0f;
+    update_and_queue_param_float(&tm_RadioBufferFill_percent, fillLevel);
 
     static uint32_t dataCollectCount = 0;
     dataCollectCount++;
@@ -139,4 +176,32 @@ void runLoggingTask()
         }
 
     }
+
+    static bool tx_in_progress = false;
+
+	if (!RADIO_DB.tx_cplt && !tx_in_progress) {
+		// waiting for a transfer to radio
+		TM_BUFFER* buffer = RADIO_DB.buffers[!RADIO_DB.write_index];
+		if (buffer->fill > 0) {
+			HAL_UART_Transmit_DMA(&huart1, buffer->bytes, buffer->fill);
+			tx_in_progress = true;
+		} else {
+			// nothing to transfer
+			RADIO_DB.tx_cplt = 1;
+		}
+	}
+
+    if (RADIO_DB.tx_cplt) {
+		taskENTER_CRITICAL();
+		tm_RadioBytesTransferred_bytes.data += RADIO_DB.buffers[!RADIO_DB.write_index]->fill;
+		RADIO_DB.buffers[!RADIO_DB.write_index]->fill = 0;
+		RADIO_DB.write_index = !RADIO_DB.write_index;
+		RADIO_DB.tx_cplt = 0;
+		tx_in_progress = false;
+		taskEXIT_CRITICAL();
+	}
+}
+
+void HAL_UART_TxCpltCallback(UART_HandleTypeDef* huart) {
+    RADIO_DB.tx_cplt = 1;
 }

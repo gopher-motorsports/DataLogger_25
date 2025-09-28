@@ -18,6 +18,9 @@
 #define ESCAPE_XOR 0x20 // escape code
 
 #define TM_SD_BUFFER_SIZE 25000
+#define TM_RADIO_BUFFER_SIZE 10000
+
+#define TM_RADIO_TX_DELAY 100
 
 typedef struct 
 {

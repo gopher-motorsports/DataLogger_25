@@ -63,7 +63,9 @@ SD_HandleTypeDef hsd;
 DMA_HandleTypeDef hdma_sdio_rx;
 DMA_HandleTypeDef hdma_sdio_tx;
 
+UART_HandleTypeDef huart1;
 UART_HandleTypeDef huart2;
+DMA_HandleTypeDef hdma_usart1_tx;
 
 osThreadId statusTaskHandle;
 uint32_t statusTaskBuffer[ 128 ];
@@ -72,10 +74,10 @@ osThreadId printTaskHandle;
 uint32_t printTaskBuffer[ 1024 ];
 osStaticThreadDef_t printTaskControlBlock;
 osThreadId loggingTaskHandle;
-uint32_t loggingTaskBuffer[ 2048 ];
+uint32_t loggingTaskBuffer[ 1024 ];
 osStaticThreadDef_t loggingTaskControlBlock;
 osThreadId serviceGcanTaskHandle;
-uint32_t serviceGcanTaskBuffer[ 1024 ];
+uint32_t serviceGcanTaskBuffer[ 2048 ];
 osStaticThreadDef_t serviceGcanTaskControlBlock;
 /* USER CODE BEGIN PV */
 
@@ -91,6 +93,7 @@ static void MX_SDIO_SD_Init(void);
 static void MX_CAN2_Init(void);
 static void MX_CAN1_Init(void);
 static void MX_ADC1_Init(void);
+static void MX_USART1_UART_Init(void);
 void startStatusTask(void const * argument);
 void startPrintTask(void const * argument);
 void startLoggingTask(void const * argument);
@@ -175,6 +178,7 @@ int main(void)
   MX_CAN2_Init();
   MX_CAN1_Init();
   MX_ADC1_Init();
+  MX_USART1_UART_Init();
   /* USER CODE BEGIN 2 */
 
   init_can(&hcan1, GCAN0);
@@ -209,11 +213,11 @@ int main(void)
   printTaskHandle = osThreadCreate(osThread(printTask), NULL);
 
   /* definition and creation of loggingTask */
-  osThreadStaticDef(loggingTask, startLoggingTask, osPriorityNormal, 0, 2048, loggingTaskBuffer, &loggingTaskControlBlock);
+  osThreadStaticDef(loggingTask, startLoggingTask, osPriorityNormal, 0, 1024, loggingTaskBuffer, &loggingTaskControlBlock);
   loggingTaskHandle = osThreadCreate(osThread(loggingTask), NULL);
 
   /* definition and creation of serviceGcanTask */
-  osThreadStaticDef(serviceGcanTask, startServiceGcanTask, osPriorityHigh, 0, 1024, serviceGcanTaskBuffer, &serviceGcanTaskControlBlock);
+  osThreadStaticDef(serviceGcanTask, startServiceGcanTask, osPriorityHigh, 0, 2048, serviceGcanTaskBuffer, &serviceGcanTaskControlBlock);
   serviceGcanTaskHandle = osThreadCreate(osThread(serviceGcanTask), NULL);
 
   /* USER CODE BEGIN RTOS_THREADS */
@@ -506,6 +510,39 @@ if (HAL_SD_ConfigWideBusOperation(&hsd, SDIO_BUS_WIDE_4B) != HAL_OK){
 }
 
 /**
+  * @brief USART1 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_USART1_UART_Init(void)
+{
+
+  /* USER CODE BEGIN USART1_Init 0 */
+
+  /* USER CODE END USART1_Init 0 */
+
+  /* USER CODE BEGIN USART1_Init 1 */
+
+  /* USER CODE END USART1_Init 1 */
+  huart1.Instance = USART1;
+  huart1.Init.BaudRate = 230400;
+  huart1.Init.WordLength = UART_WORDLENGTH_8B;
+  huart1.Init.StopBits = UART_STOPBITS_1;
+  huart1.Init.Parity = UART_PARITY_NONE;
+  huart1.Init.Mode = UART_MODE_TX_RX;
+  huart1.Init.HwFlowCtl = UART_HWCONTROL_RTS_CTS;
+  huart1.Init.OverSampling = UART_OVERSAMPLING_16;
+  if (HAL_UART_Init(&huart1) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN USART1_Init 2 */
+
+  /* USER CODE END USART1_Init 2 */
+
+}
+
+/**
   * @brief USART2 Initialization Function
   * @param None
   * @retval None
@@ -557,6 +594,9 @@ static void MX_DMA_Init(void)
   /* DMA2_Stream6_IRQn interrupt configuration */
   HAL_NVIC_SetPriority(DMA2_Stream6_IRQn, 5, 0);
   HAL_NVIC_EnableIRQ(DMA2_Stream6_IRQn);
+  /* DMA2_Stream7_IRQn interrupt configuration */
+  HAL_NVIC_SetPriority(DMA2_Stream7_IRQn, 5, 0);
+  HAL_NVIC_EnableIRQ(DMA2_Stream7_IRQn);
 
 }
 
@@ -581,12 +621,32 @@ static void MX_GPIO_Init(void)
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOA, MCU_HBEAT_Pin|MCU_FAULT_Pin|MCU_GSENSE_Pin, GPIO_PIN_RESET);
 
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(GPIOC, RFD_GPIO5_Pin|RFD_GPIO4_Pin, GPIO_PIN_RESET);
+
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(GPIOB, RFD_GPIO3_Pin|RFD_GPIO2_Pin|RFD_GPIO1_Pin|RFD_GPIO0_Pin, GPIO_PIN_RESET);
+
   /*Configure GPIO pins : MCU_HBEAT_Pin MCU_FAULT_Pin MCU_GSENSE_Pin */
   GPIO_InitStruct.Pin = MCU_HBEAT_Pin|MCU_FAULT_Pin|MCU_GSENSE_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+
+  /*Configure GPIO pins : RFD_GPIO5_Pin RFD_GPIO4_Pin */
+  GPIO_InitStruct.Pin = RFD_GPIO5_Pin|RFD_GPIO4_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
+
+  /*Configure GPIO pins : RFD_GPIO3_Pin RFD_GPIO2_Pin RFD_GPIO1_Pin RFD_GPIO0_Pin */
+  GPIO_InitStruct.Pin = RFD_GPIO3_Pin|RFD_GPIO2_Pin|RFD_GPIO1_Pin|RFD_GPIO0_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
   /*Configure GPIO pin : SDIO_CD_Pin */
   GPIO_InitStruct.Pin = SDIO_CD_Pin;
