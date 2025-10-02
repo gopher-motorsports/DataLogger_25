@@ -37,17 +37,11 @@ static TM_BUFFER buffer2 = {
     .fill = 0
 };
 
-// RADIO DOUBLE BUFFER
-static uint8_t b3[TM_RADIO_BUFFER_SIZE];
-static TM_BUFFER buffer3 = {
-    .bytes = b3,
-    .size = TM_RADIO_BUFFER_SIZE,
-    .fill = 0
-};
-
-static uint8_t b4[TM_RADIO_BUFFER_SIZE];
-static TM_BUFFER buffer4 = {
-    .bytes = b4,
+// RADIO BUFFER
+static uint8_t RADIO_B[TM_RADIO_BUFFER_SIZE]; // radio buffer in memory?
+static TM_BUFFER RADIO_SINGLE = { // TM_BUFFER struct that holds buffer params
+    .bytes = RADIO_B, /* pointer variable to buffer, remember name of an array is the same as 
+    &RADIO_B[0]*/
     .size = TM_RADIO_BUFFER_SIZE,
     .fill = 0
 };
@@ -59,11 +53,6 @@ TM_DBL_BUFFER SD_DB = {
     .tx_cplt = 1
 };
 
-TM_DBL_BUFFER RADIO_DB = {
-    .buffers = { &buffer3, &buffer4 },
-    .write_index = 0,
-    .tx_cplt = 1
-};
 
 /* ==================================================================== */
 /* =================== LOCAL FUNCTION DECLARATIONS ==================== */
@@ -84,7 +73,7 @@ void initLoggingTask()
 
 void runLoggingTask()
 {
-    // Average coin cell voltage samples
+    // Floating Average coin cell voltage samples
 	uint32_t adc_total = 0;
 	for (size_t i = 0; i < ADC_VBAT_BUF_SIZE; i++) {
 		adc_total += ADC_VBAT_BUF[i];
@@ -112,10 +101,11 @@ void runLoggingTask()
 			}
 		}
         
+        //for single radio buffer
         if (param->last_rx > radio_last_tx[i] && (tick - radio_last_tx[i]) > TM_RADIO_TX_DELAY) {
-			// parameter has been updated and hasn't been sent in a while
+			// parameter has been updated and hasn't been sent by the radio in a while
 			// create packet and add to radio buffer
-			bool res = tm_data_record(RADIO_DB.buffers[RADIO_DB.write_index], param);
+			bool res = tm_data_record(&RADIO_SINGLE, param);
 			if (res) {
 				radio_last_tx[i] = tick;
 			} else {
@@ -127,7 +117,7 @@ void runLoggingTask()
 
 	float fillLevel = (float) SD_DB.buffers[SD_DB.write_index]->fill / SD_DB.buffers[SD_DB.write_index]->size * 100.0f;
     update_and_queue_param_float(&tm_SDBufferFill_percent, fillLevel);
-    fillLevel = (float) RADIO_DB.buffers[RADIO_DB.write_index]->fill / RADIO_DB.buffers[RADIO_DB.write_index]->size * 100.0f;
+    fillLevel = (float) RADIO_SINGLE.fill / RADIO_SINGLE.size * 100.0f;
     update_and_queue_param_float(&tm_RadioBufferFill_percent, fillLevel);
 
     static uint32_t dataCollectCount = 0;
@@ -179,29 +169,24 @@ void runLoggingTask()
 
     static bool tx_in_progress = false;
 
-	if (!RADIO_DB.tx_cplt && !tx_in_progress) {
+	if (!tx_in_progress) {
 		// waiting for a transfer to radio
-		TM_BUFFER* buffer = RADIO_DB.buffers[!RADIO_DB.write_index];
+		TM_BUFFER* buffer = (TM_BUFFER*) RADIO_B;
 		if (buffer->fill > 0) {
 			HAL_UART_Transmit_DMA(&huart1, buffer->bytes, buffer->fill);
 			tx_in_progress = true;
-		} else {
-			// nothing to transfer
-			RADIO_DB.tx_cplt = 1;
 		}
 	}
 
-    if (RADIO_DB.tx_cplt) {
+    if (tx_in_progress) {
 		taskENTER_CRITICAL();
-		tm_RadioBytesTransferred_bytes.data += RADIO_DB.buffers[!RADIO_DB.write_index]->fill;
-		RADIO_DB.buffers[!RADIO_DB.write_index]->fill = 0;
-		RADIO_DB.write_index = !RADIO_DB.write_index;
-		RADIO_DB.tx_cplt = 0;
+		tm_RadioBytesTransferred_bytes.data += RADIO_SINGLE.fill;
+		RADIO_SINGLE.fill = 0;
 		tx_in_progress = false;
 		taskEXIT_CRITICAL();
 	}
 }
 
 void HAL_UART_TxCpltCallback(UART_HandleTypeDef* huart) {
-    RADIO_DB.tx_cplt = 1;
+    SD_DB.tx_cplt = false;
 }
