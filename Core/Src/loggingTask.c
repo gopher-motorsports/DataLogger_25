@@ -179,6 +179,7 @@ void runLoggingTask()
 	}
 
     if (tx_in_progress) {
+        printf("transmission in progress");
 		taskENTER_CRITICAL();
 		tm_RadioBytesTransferred_bytes.data += RADIO_SINGLE.fill;
 		RADIO_SINGLE.fill = 0;

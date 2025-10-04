@@ -58,7 +58,7 @@ bool sd_init()
 
     if (!sd_detected)
     {
-        printf("No SD card detected\n");
+        // printf("No SD card detected\n");
         return false;
     }
 
@@ -72,7 +72,7 @@ bool sd_init()
 	// if (f_mount(&SDFatFS, SDPath, 1) != FR_OK)
     if(fr != FR_OK)
 	{
-        printf("SD card Mount Failed, FRESULT = %d\n", fr);
+        // printf("SD card Mount Failed, FRESULT = %d\n", fr);
         sd_deinit();
         return false;
     }
@@ -89,7 +89,7 @@ bool sd_init()
 
     if (f_open(&SDFile, filename, FA_WRITE | FA_CREATE_NEW) != FR_OK)
     {
-        printf("SD card Open Failed\n");
+        // printf("SD card Open Failed\n");
         return false;
     }
 
@@ -97,7 +97,7 @@ bool sd_init()
 
     if (f_printf(&SDFile, "/%s:\n", filename) <= 0)
     {
-        printf("SD card print failed\n");
+        // printf("SD card print failed\n");
         return false;
     }
 

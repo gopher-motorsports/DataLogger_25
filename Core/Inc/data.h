@@ -17,7 +17,7 @@
 #define ESCAPE_BYTE 0x7d // next byte is escaped
 #define ESCAPE_XOR 0x20 // escape code
 
-#define TM_SD_BUFFER_SIZE 25000
+#define TM_SD_BUFFER_SIZE 20000
 #define TM_RADIO_BUFFER_SIZE 10000
 
 #define TM_RADIO_TX_DELAY 100
