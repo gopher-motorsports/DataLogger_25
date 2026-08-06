@@ -10,9 +10,9 @@
     },
     "tasks": [ 
         {
-            "type": "shell",
+            "type": "process",
             "label": "Build GopherCAN",
-            "command": "python",
+            "command": "${workspaceFolder}\\.venv\\bin\\python.exe",
             "args": [
                 "autogen.py",
                 "configs/go4-25.yaml"
@@ -23,9 +23,9 @@
             "problemMatcher": []
         },
         {
-            "type": "shell",
+            "type": "process",
             "label": "Build Gopher Sense",
-            "command": "python",
+            "command": "${workspaceFolder}\\.venv\\bin\\python.exe",
             "args": [
                 "gsense_auto_gen.py",
                 "./../${workspaceFolderBasename}/${workspaceFolderBasename}_config.yaml"
@@ -108,9 +108,9 @@
             "detail": "Build libraies and Clean Rebuild"
         },
         {
-            "type": "shell",
+            "type": "process",
             "label": "Start CAN Bootloader",
-            "command": "python",
+            "command": "${workspaceFolder}\\.venv\\bin\\python.exe",
             "args": [
                 "../gophercan-lib/gcan_bootloader/src/gcan_bootloader.py",
                 "go4-25"

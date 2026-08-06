@@ -58,7 +58,7 @@ bool sd_init()
 
     if (!sd_detected)
     {
-        printf("No SD card detected\n");
+        // printf("No SD card detected\n");
         return false;
     }
 
@@ -72,7 +72,7 @@ bool sd_init()
 	// if (f_mount(&SDFatFS, SDPath, 1) != FR_OK)
     if(fr != FR_OK)
 	{
-        printf("SD card Mount Failed, FRESULT = %d\n", fr);
+        // printf("SD card Mount Failed, FRESULT = %d\n", fr);
         sd_deinit();
         return false;
     }
@@ -97,7 +97,7 @@ bool sd_init()
 
     if (f_printf(&SDFile, "/%s:\n", filename) <= 0)
     {
-        printf("SD card print failed\n");
+        // printf("SD card print failed\n");
         return false;
     }
 
@@ -115,14 +115,14 @@ bool sd_write(uint8_t* buffer, uint16_t size){
     FRESULT res = f_write(&SDFile, buffer, size, &bytes_written);
     if (res != FR_OK)
     {
-        printf("SD card failed to write, FRESULT = %d\n", res);
+        // printf("SD card failed to write, FRESULT = %d\n", res);
         return false;
     }
     
     res = f_sync(&SDFile);
     if (res != FR_OK)
     {
-        printf("SD card sync fail, FRESULT = %d\n", res);
+        // printf("SD card sync fail, FRESULT = %d\n", res);
         return false;
     }
 
