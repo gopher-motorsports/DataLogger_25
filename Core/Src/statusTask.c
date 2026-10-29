@@ -5,6 +5,8 @@
 #include <stdint.h>
 #include "statusTask.h"
 #include "main.h"
+#include "GopherCAN.h"
+#include "GopherCAN_network.h"
 
 /* ==================================================================== */
 /* ============================= DEFINES ============================== */
@@ -60,6 +62,8 @@ void initStatusTask()
 
 void runStatusTask()
 {
+
     // Update hearbeat led
     updateHeartbeat();
+    float wheelspeedright = wheelSpeedRearLeft_mph.data;
 }

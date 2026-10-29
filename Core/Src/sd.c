@@ -66,7 +66,7 @@ bool sd_init()
     //     printf("FATFS_LinkDriver failed\n");
     // }
 
-    FRESULT fr = f_mount(&SDFatFS, SDPath, 0);
+    FRESULT fr = f_mount(&SDFatFS, SDPath, 0); 
     // printf("FR --> %d\n", fr);
 
 	// if (f_mount(&SDFatFS, SDPath, 1) != FR_OK)
@@ -89,7 +89,7 @@ bool sd_init()
 
     if (f_open(&SDFile, filename, FA_WRITE | FA_CREATE_NEW) != FR_OK)
     {
-        printf("SD card Open Failed\n");
+        // printf("SD card Open Failed\n");
         return false;
     }
 
